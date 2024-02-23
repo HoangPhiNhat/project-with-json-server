@@ -1,35 +1,70 @@
-const baseURL = "http://localhost:3000/product";
+const baseURL = "http://localhost:3000/products";
 const productForm = document.getElementById("productForm");
 const productList = document.getElementById("productList");
 const handleAddProduct = document.getElementById("handleAddProduct");
+const recordNumber = document.getElementById("limitPerPage");
+const searchForm = document.getElementById("searchForm");
+const filterForm = document.getElementById("filterForm");
+const sortPrice = document.getElementById("sortPrice");
+let isSortingEnabled = false;
 let editingProductId = null;
+let currentPage = 1;
+let perPage = 2;
+let prev;
+let next;
+const limitPerPage = () => {
+  recordNumber.addEventListener("change", () => {
+    perPage = recordNumber.value;
+    fetchProducts();
+  });
+};
+limitPerPage();
+sortPrice.addEventListener("click", () => {
+  isSortingEnabled = true;
+  fetchProducts();
+});
 const fetchProducts = async () => {
-  const res = await fetch(baseURL);
+  let url = baseURL + `?_page=${currentPage}&_limit=${perPage}`;
+  if (isSortingEnabled) {
+    url += `&_sort=price&_order=asc`;
+  }
+  const res = await fetch(url);
   const data = await res.json();
   console.log(data);
   productList.innerHTML = "";
-  data.forEach((element, index) => {
-    const newElm = document.createElement("tr");
-    newElm.classList.add("productItem");
-    newElm.innerHTML = `
-    <th scope="row">${index + 1}</th>
-    <td> ${element.name} </td>
-    <td> ${element.price} </td>
-    <td>
-   <button data-toggle="modal" data-target="#modalDeleteProduct" class="btn btn-outline-info" onclick="setDeleteProductId('${
-     element.id
-   }')">Xóa</button>
-    <button data-toggle="modal"
-    data-target="#modalEditProduct" class="btn btn-outline-warning" onclick="editPr('${
-      element.id
-    }')">Sửa</button>
-    </td>
-    `;
-    productList.appendChild(newElm);
-  });
-  list = document.querySelectorAll("#productList .productItem");
-  loadItem();
+  if (Array.isArray(data)) {
+    data.forEach((element, index) => {
+      const productItem = createProductItem(element, index);
+      productList.appendChild(productItem);
+    });
+  } else {
+    console.error(data);
+  }
 };
+
+const pagination = async () => {
+  const res = await fetch(baseURL + `?_page=${currentPage}&_limit=${perPage}`);
+  const data = await res.json();
+  console.log(data);
+  prev = data.prev;
+  next = data.next;
+};
+const nextPage = async () => {
+  await pagination();
+  console.log(next);
+  if (next !== null) {
+    currentPage++;
+    fetchProducts();
+  }
+};
+const prevPage = async () => {
+  await pagination();
+  if (currentPage > 1) {
+    currentPage--;
+    fetchProducts();
+  }
+};
+
 fetchProducts();
 
 const setDeleteProductId = (id) => {
@@ -99,64 +134,85 @@ const addProduct = async () => {
 
 const handleAddProductClick = (event) => {
   event.preventDefault();
-
   addProduct();
 };
-
 handleAddProduct.addEventListener("click", handleAddProductClick);
 
-//
-let thisPage = 1;
-let limit = 2;
-let list = document.querySelectorAll("#productList .productItem");
-console.log(list);
+let min;
+let max;
 
-function loadItem() {
-  let beginGet = limit * (thisPage - 1);
-  let endGet = limit * thisPage - 1;
-  list.forEach((item, key) => {
-    if (key >= beginGet && key <= endGet) {
-      item.style.display = "table-row";
-    } else {
-      item.style.display = "none";
-    }
-  });
-  listPage();
-}
-loadItem();
-function listPage() {
-  let count = Math.ceil(list.length / limit);
-  document.querySelector(".listPage").innerHTML = "";
-
-  if (thisPage != 1) {
-    let prev = document.createElement("li");
-    prev.innerText = "PREV";
-    prev.setAttribute("onclick", "changePage(" + (thisPage - 1) + ")");
-    document.querySelector(".listPage").appendChild(prev);
+filterForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  min = document.getElementById("min").value;
+  max = document.getElementById("max").value;
+  await handleSort();
+});
+const handleSort = async () => {
+  const res = await fetch(baseURL + `?price_gte=${min}&price_lte=${max}`);
+  const data = await res.json();
+  productList.innerHTML = "";
+  if (Array.isArray(data)) {
+    data.forEach((element, index) => {
+      const productItem = createProductItem(element, index);
+      productList.appendChild(productItem);
+    });
+  } else {
+    console.error(data);
   }
+};
+let keyWords;
 
-  for (i = 1; i <= count; i++) {
-    let newPage = document.createElement("li");
-    newPage.innerText = i;
-    if (i == thisPage) {
-      newPage.classList.add("active");
-    }
-    newPage.setAttribute("onclick", "changePage(" + i + ")");
-    document.querySelector(".listPage").appendChild(newPage);
+searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  keyWords = document.getElementById("searchInput").value;
+  await handleSearch();
+});
+handleAddProduct.addEventListener("click", handleAddProductClick);
+const handleSearch = async () => {
+  const res = await fetch(baseURL + `?q=${keyWords}`);
+  const data = await res.json();
+  console.log(data);
+  productList.innerHTML = "";
+  if (Array.isArray(data)) {
+    data.forEach((element, index) => {
+      const productItem = createProductItem(element, index);
+      productList.appendChild(productItem);
+    });
+  } else {
+    console.error("Data is not an array:", data);
   }
+};
+const createProductItem = (element, index) => {
+  const newElm = document.createElement("tr");
+  newElm.classList.add("productItem");
+  newElm.innerHTML = `
+      <th scope="row">${(currentPage - 1) * perPage + index + 1}</th>
+      <td>${element.name}</td>
+      <td>${element.price}</td>
+      <td>
+          <button data-toggle="modal" data-target="#modalDeleteProduct" class="btn btn-outline-info" onclick="setDeleteProductId('${
+            element.id
+          }')">Xóa</button>
+          <button data-toggle="modal" data-target="#modalEditProduct" class="btn btn-outline-warning" onclick="editPr('${
+            element.id
+          }')">Sửa</button>
+      </td>
+  `;
+  return newElm;
+};
+// const handleSortPrice = async () => {
+//   while (productList.firstChild) {
+//     productList.removeChild(productList.firstChild);
+//   }
 
-  if (thisPage != count) {
-    let next = document.createElement("li");
-    next.innerText = "NEXT";
-    next.setAttribute("onclick", "changePage(" + (thisPage + 1) + ")");
-    document.querySelector(".listPage").appendChild(next);
-  }
-}
-function changePage(i) {
-  thisPage = i;
-  loadItem();
-}
-// sort
-function ascending() {
-  let 
-}
+//   const res = await fetch(baseURL + `?_sort=price&_order=asc`);
+//   const data = await res.json();
+//   data.forEach((element, index) => {
+//     const productItem = createProductItem(element, index);
+//     productList.appendChild(productItem);
+//   });
+// };
+
+// sortPrice.addEventListener("click", async () => {
+//   await handleSortPrice();
+// });
