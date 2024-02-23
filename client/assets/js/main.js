@@ -5,28 +5,36 @@ const handleAddProduct = document.getElementById("handleAddProduct");
 const recordNumber = document.getElementById("limitPerPage");
 const searchForm = document.getElementById("searchForm");
 const filterForm = document.getElementById("filterForm");
-const sortPrice = document.getElementById("sortPrice");
+const minToMax = document.getElementById("min-max");
+const maxToMin = document.getElementById("max-min");
 let isSortingEnabled = false;
 let editingProductId = null;
+let sortingDirection = null;
 let currentPage = 1;
 let perPage = 2;
-let prev;
-let next;
 const limitPerPage = () => {
   recordNumber.addEventListener("change", () => {
     perPage = recordNumber.value;
     fetchProducts();
   });
 };
-limitPerPage();
-sortPrice.addEventListener("click", () => {
+
+minToMax.addEventListener("click", () => {
   isSortingEnabled = true;
+  sortingDirection = "asc";
   fetchProducts();
 });
+
+maxToMin.addEventListener("click", () => {
+  isSortingEnabled = true;
+  sortingDirection = "desc";
+  fetchProducts();
+});
+limitPerPage();
 const fetchProducts = async () => {
   let url = baseURL + `?_page=${currentPage}&_limit=${perPage}`;
   if (isSortingEnabled) {
-    url += `&_sort=price&_order=asc`;
+    url += `&_sort=price&_order=${sortingDirection}`;
   }
   const res = await fetch(url);
   const data = await res.json();
@@ -42,6 +50,8 @@ const fetchProducts = async () => {
   }
 };
 
+let prev;
+let next;
 const pagination = async () => {
   const res = await fetch(baseURL + `?_page=${currentPage}&_limit=${perPage}`);
   const data = await res.json();
@@ -157,7 +167,7 @@ const handleSort = async () => {
       productList.appendChild(productItem);
     });
   } else {
-    console.error(data);
+    console.error("Data is not an array:", data);
   }
 };
 let keyWords;
@@ -200,19 +210,15 @@ const createProductItem = (element, index) => {
   `;
   return newElm;
 };
-// const handleSortPrice = async () => {
-//   while (productList.firstChild) {
-//     productList.removeChild(productList.firstChild);
-//   }
+const handleSortPrice = async () => {
+  while (productList.firstChild) {
+    productList.removeChild(productList.firstChild);
+  }
 
-//   const res = await fetch(baseURL + `?_sort=price&_order=asc`);
-//   const data = await res.json();
-//   data.forEach((element, index) => {
-//     const productItem = createProductItem(element, index);
-//     productList.appendChild(productItem);
-//   });
-// };
-
-// sortPrice.addEventListener("click", async () => {
-//   await handleSortPrice();
-// });
+  const res = await fetch(baseURL + `?_sort=price&_order=asc`);
+  const data = await res.json();
+  data.forEach((element, index) => {
+    const productItem = createProductItem(element, index);
+    productList.appendChild(productItem);
+  });
+};

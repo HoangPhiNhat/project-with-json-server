@@ -136,8 +136,26 @@
                         <tr>
                             <th scope="col">STT</th>
                             <th scope="col">Tên</th>
-                            <th id="sortPrice" scope="col">Giá <i
-                                    class="bi bi-chevron-expand"></i></th>
+                            <th id="sortPrice" scope="col">
+                                <div class="dropdown show">
+                                    <a class=" dropdown-toggle"
+                                        href="#" role="button"
+                                        id="dropdownMenuLink"
+                                        data-toggle="dropdown"
+                                        aria-haspopup="true"
+                                        aria-expanded="false">
+                                        Giá
+                                    </a>
+
+                                    <div class="dropdown-menu"
+                                        aria-labelledby="dropdownMenuLink">
+                                        <a id="min-max" class="dropdown-item"
+                                            href="#">Từ thấp - cao</a>
+                                        <a id="max-min" class="dropdown-item"
+                                            href="#">Từ cao - thấp</a>
+                                    </div>
+                                </div>
+                            </th>
                             <th scope="col">Chức năng</th>
                         </tr>
                     </thead>
