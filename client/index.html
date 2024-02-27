@@ -44,35 +44,21 @@
                     </div>
                     <div class="row justify-content-between align-items-center">
                         <div class="filter">
-                            Khoảng giá:
-                            <form action id="filterForm">
-                                <div class="d-flex">
-                                    <input
-                                        type="text" aria-label="Small"
-                                        maxlength="13" id="min"
-                                        class="form-control"
-                                        placeholder="₫ TỪ" value>
-                                    <div
-                                        class="line"></div>
-                                    <input
-                                        type="text" aria-label maxlength="13"
-                                        class="form-control" id="max"
-                                        placeholder="₫ ĐẾN" value>
+                            <form id="filterForm" class="form-inline">
+                                <div class="form-group">
+                                    <label class="mr-1" for="filterPrice">Giá:
+                                    </label>
+                                    <select
+                                        onchange="onChangeSortPrice()"
+                                        class="custom-select"
+                                        id="sortPrice">
+                                        <option value="asc">Nhỏ - lớn</option>
+                                        <option value="desc">Lớn - nhỏ</option>
+                                    </select>
                                 </div>
                                 <button
                                     class="btn btn-outline-success my-2 my-sm-0"
-                                    type="submit">Áp dụng</button>
-                            </form>
-                        </div>
-                        <div class="search">
-                            <form id="searchForm" class="form-inline">
-                                <input id="searchInput"
-                                    class="form-control mr-sm-2"
-                                    type="search"
-                                    placeholder="Search" aria-label="Search">
-                                <button
-                                    class="btn btn-outline-success my-2 my-sm-0"
-                                    type="submit">Search</button>
+                                    type="submit">Lọc</button>
                             </form>
                         </div>
                     </div>
@@ -136,25 +122,8 @@
                         <tr>
                             <th scope="col">STT</th>
                             <th scope="col">Tên</th>
-                            <th id="sortPrice" scope="col">
-                                <div class="dropdown show">
-                                    <a class=" dropdown-toggle"
-                                        href="#" role="button"
-                                        id="dropdownMenuLink"
-                                        data-toggle="dropdown"
-                                        aria-haspopup="true"
-                                        aria-expanded="false">
-                                        Giá
-                                    </a>
-
-                                    <div class="dropdown-menu"
-                                        aria-labelledby="dropdownMenuLink">
-                                        <a id="min-max" class="dropdown-item"
-                                            href="#">Từ thấp - cao</a>
-                                        <a id="max-min" class="dropdown-item"
-                                            href="#">Từ cao - thấp</a>
-                                    </div>
-                                </div>
+                            <th scope="col">
+                                Giá
                             </th>
                             <th scope="col">Chức năng</th>
                         </tr>
@@ -164,16 +133,23 @@
                     </tbody>
                 </table>
                 <div class="limit">
-                    <select name id="limitPerPage">
+                    <select onchange="onChangePerPage()" class="custom-select"
+                        id="limitPerPage">
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
                 </div>
-                <div id="pagination">
-                    <button id="prevPageBtn" onclick="prevPage()">Prev</button>
-                    <button id="nextPageBtn" onclick="nextPage()">Next</button>
+                <div
+                    class="d-flex justify-content-center align-items-center"
+                    id="pagination">
+                    <button class="btn" id="prevPageBtn"
+                        onclick="prevPage()">Prev</button>
+                    <ul class="nav" id="pages">
+                    </ul>
+                    <button class="btn" id="nextPageBtn"
+                        onclick="nextPage()">Next</button>
                 </div>
             </div>
         </div>

@@ -8,3 +8,29 @@
 #sortPrice:hover {
     cursor: pointer;
 }
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+
+
+#pages li {
+    list-style-type: none;
+    display: inline-block;
+}
+
+#pages li {
+    position: relative;
+    padding: 0 25px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#pages li:hover,
+#pages li.active {
+    background-color: antiquewhite;
+    border-radius: 20%;
+}

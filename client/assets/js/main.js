@@ -5,43 +5,48 @@ const handleAddProduct = document.getElementById("handleAddProduct");
 const recordNumber = document.getElementById("limitPerPage");
 const searchForm = document.getElementById("searchForm");
 const filterForm = document.getElementById("filterForm");
-const minToMax = document.getElementById("min-max");
-const maxToMin = document.getElementById("max-min");
+let url = null;
 let isSortingEnabled = false;
 let editingProductId = null;
 let sortingDirection = null;
-let currentPage = 1;
-let perPage = 2;
-const limitPerPage = () => {
-  recordNumber.addEventListener("change", () => {
-    perPage = recordNumber.value;
-    fetchProducts();
-  });
+// let currentPage = 1;
+// let perPage = 2;
+
+let prev;
+let next;
+let page;
+const query = {
+  _page: 1,
+  _per_page: 10,
+  _sort: "price",
+  _order: null,
 };
-
-minToMax.addEventListener("click", () => {
-  isSortingEnabled = true;
-  sortingDirection = "asc";
+const onChangeSortPrice = () => {
+  query._order = document.getElementById("sortPrice").value;
+  console.log(query._order);
   fetchProducts();
-});
-
-maxToMin.addEventListener("click", () => {
-  isSortingEnabled = true;
-  sortingDirection = "desc";
+};
+const onChangePerPage = () => {
+  query._per_page = recordNumber.value;
   fetchProducts();
-});
-limitPerPage();
+  pages();
+};
 const fetchProducts = async () => {
-  let url = baseURL + `?_page=${currentPage}&_limit=${perPage}`;
-  if (isSortingEnabled) {
-    url += `&_sort=price&_order=${sortingDirection}`;
-  }
+  url = baseURL + `?_page=${query._page}&_per_page=${query._per_page}`;
   const res = await fetch(url);
   const data = await res.json();
-  console.log(data);
+  prev = data.prev;
+  next = data.next;
+  page = data.pages;
+  console.log(data.data);
   productList.innerHTML = "";
-  if (Array.isArray(data)) {
-    data.forEach((element, index) => {
+  if (Array.isArray(data.data)) {
+    if (query._sort === "price") {
+      data.data.sort((a, b) => {
+        return query._order === "asc" ? a.price - b.price : b.price - a.price;
+      });
+    }
+    data.data.forEach((element, index) => {
       const productItem = createProductItem(element, index);
       productList.appendChild(productItem);
     });
@@ -49,28 +54,40 @@ const fetchProducts = async () => {
     console.error(data);
   }
 };
-
-let prev;
-let next;
-const pagination = async () => {
-  const res = await fetch(baseURL + `?_page=${currentPage}&_limit=${perPage}`);
-  const data = await res.json();
-  console.log(data);
-  prev = data.prev;
-  next = data.next;
+const pages = async () => {
+  await fetchProducts();
+  let pageNumber = document.getElementById("pages");
+  pageNumber.innerHTML = "";
+  for (let i = 1; i <= page; i++) {
+    const li = document.createElement("li");
+    li.textContent = i;
+    if (i === query._page) {
+      li.classList.add("active");
+    }
+    li.addEventListener("click", async () => {
+      query._page = i;
+      fetchProducts();
+      pageNumber.querySelectorAll("li").forEach((item) => {
+        item.classList.remove("active");
+      });
+      li.classList.add("active");
+    });
+    pageNumber.appendChild(li);
+  }
 };
+
+pages();
 const nextPage = async () => {
-  await pagination();
-  console.log(next);
+  await fetchProducts();
   if (next !== null) {
-    currentPage++;
+    query._page++;
     fetchProducts();
   }
 };
 const prevPage = async () => {
-  await pagination();
-  if (currentPage > 1) {
-    currentPage--;
+  await fetchProducts();
+  if (query._page > 1) {
+    query._page--;
     fetchProducts();
   }
 };
@@ -148,55 +165,55 @@ const handleAddProductClick = (event) => {
 };
 handleAddProduct.addEventListener("click", handleAddProductClick);
 
-let min;
-let max;
+// let min;
+// let max;
 
-filterForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  min = document.getElementById("min").value;
-  max = document.getElementById("max").value;
-  await handleSort();
-});
-const handleSort = async () => {
-  const res = await fetch(baseURL + `?price_gte=${min}&price_lte=${max}`);
-  const data = await res.json();
-  productList.innerHTML = "";
-  if (Array.isArray(data)) {
-    data.forEach((element, index) => {
-      const productItem = createProductItem(element, index);
-      productList.appendChild(productItem);
-    });
-  } else {
-    console.error("Data is not an array:", data);
-  }
-};
-let keyWords;
+// filterForm.addEventListener("submit", async (event) => {
+//   event.preventDefault();
+//   min = document.getElementById("min").value;
+//   max = document.getElementById("max").value;
+//   await handleSort();
+// });
+// const handleSort = async () => {
+//   const res = await fetch(baseURL + `?price_gte=${min}&price_lte=${max}`);
+//   const data = await res.json();
+//   productList.innerHTML = "";
+//   if (Array.isArray(data)) {
+//     data.forEach((element, index) => {
+//       const productItem = createProductItem(element, index);
+//       productList.appendChild(productItem);
+//     });
+//   } else {
+//     console.error("Data is not an array:", data);
+//   }
+// };
+// let keyWords;
 
-searchForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  keyWords = document.getElementById("searchInput").value;
-  await handleSearch();
-});
-handleAddProduct.addEventListener("click", handleAddProductClick);
-const handleSearch = async () => {
-  const res = await fetch(baseURL + `?q=${keyWords}`);
-  const data = await res.json();
-  console.log(data);
-  productList.innerHTML = "";
-  if (Array.isArray(data)) {
-    data.forEach((element, index) => {
-      const productItem = createProductItem(element, index);
-      productList.appendChild(productItem);
-    });
-  } else {
-    console.error("Data is not an array:", data);
-  }
-};
+// searchForm.addEventListener("submit", async (event) => {
+//   event.preventDefault();
+//   keyWords = document.getElementById("searchInput").value;
+//   await handleSearch();
+// });
+// handleAddProduct.addEventListener("click", handleAddProductClick);
+// const handleSearch = async () => {
+//   const res = await fetch(baseURL + `?name=${keyWords}`);
+//   const data = await res.json();
+//   console.log(data);
+//   productList.innerHTML = "";
+//   if (Array.isArray(data)) {
+//     data.forEach((element, index) => {
+//       const productItem = createProductItem(element, index);
+//       productList.appendChild(productItem);
+//     });
+//   } else {
+//     console.error("Data is not an array:", data);
+//   }
+// };
 const createProductItem = (element, index) => {
   const newElm = document.createElement("tr");
   newElm.classList.add("productItem");
   newElm.innerHTML = `
-      <th scope="row">${(currentPage - 1) * perPage + index + 1}</th>
+      <th scope="row">${(query._page - 1) * query._per_page + index + 1}</th>
       <td>${element.name}</td>
       <td>${element.price}</td>
       <td>
