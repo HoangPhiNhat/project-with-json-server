@@ -1,241 +1,172 @@
 const baseURL = "http://localhost:3000/products";
-const productForm = document.getElementById("productForm");
 const productList = document.getElementById("productList");
-const handleAddProduct = document.getElementById("handleAddProduct");
-const recordNumber = document.getElementById("limitPerPage");
-const searchForm = document.getElementById("searchForm");
-const filterForm = document.getElementById("filterForm");
-let url = null;
-let isSortingEnabled = false;
-let editingProductId = null;
-let sortingDirection = null;
-// let currentPage = 1;
-// let perPage = 2;
 
-let prev;
-let next;
-let page;
 const query = {
   _page: 1,
   _per_page: 10,
-  _sort: "price",
+  _sort: null,
   _order: null,
+  name: null,
 };
-const onChangeSortPrice = () => {
-  query._order = document.getElementById("sortPrice").value;
-  console.log(query._order);
+const sortPrice = () => {
+  if (query._sort === null) {
+    query._sort = "-price";
+  } else if (query._sort === "-price") {
+    query._sort = "price";
+  } else {
+    query._sort = null;
+  }
   fetchProducts();
 };
-const onChangePerPage = () => {
-  query._per_page = recordNumber.value;
+const getValueForSearch = () => {
+  const value = document.getElementById("searchInput").value;
+  if (value !== "") {
+    query.name = value;
+    console.log(query.name);
+  } else {
+    // console.log(123);
+    query.name = null;
+  }
   fetchProducts();
-  pages();
 };
+const keys = Object.keys(query);
+let nextURL = null;
+let numberPages = null;
 const fetchProducts = async () => {
-  url = baseURL + `?_page=${query._page}&_per_page=${query._per_page}`;
+  let url = baseURL + `?`;
+  // dùng Object.keys(query) để lấy ra các key trong object query => dung vong for để lặp qua từng key
+  // => Lấy key và value tương ứng trong query để gán param vào url
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    if (key !== "_page" && key !== "_per_page") {
+      if (key === "_sort") {
+        if (query[key] === "-price" || query[key] === "price") {
+          url += `&${key}=${query[key]}`;
+        } else {
+          url;
+        }
+      }
+      if (key === "name") {
+        if (query[key] !== null) {
+          console.log(query[key]);
+          url += `&${key}=${query[key]}`;
+        } else {
+          url;
+        }
+      }
+      continue;
+    }
+    // console.log("key:", key, query[key]);
+    if (index !== 0) {
+      url += "&";
+    }
+    url += `${key}=${query[key]}`;
+    console.log(url);
+    // console.log(index, keys.length - 1);
+  }
   const res = await fetch(url);
   const data = await res.json();
-  prev = data.prev;
-  next = data.next;
-  page = data.pages;
-  console.log(data.data);
+  nextURL = data.next;
   productList.innerHTML = "";
-  if (Array.isArray(data.data)) {
-    if (query._sort === "price") {
-      data.data.sort((a, b) => {
-        return query._order === "asc" ? a.price - b.price : b.price - a.price;
-      });
-    }
-    data.data.forEach((element, index) => {
-      const productItem = createProductItem(element, index);
-      productList.appendChild(productItem);
-    });
-  } else {
-    console.error(data);
-  }
-};
-const pages = async () => {
-  await fetchProducts();
+  data.data.forEach((element, index) => {
+    const productItem = createProductItem(element, index);
+    productList.appendChild(productItem);
+  });
   let pageNumber = document.getElementById("pages");
   pageNumber.innerHTML = "";
-  for (let i = 1; i <= page; i++) {
+  let currentPage = query._page;
+  for (let i = 1; i <= data.pages; i++) {
     const li = document.createElement("li");
     li.textContent = i;
-    if (i === query._page) {
+    if (i === currentPage) {
       li.classList.add("active");
     }
     li.addEventListener("click", async () => {
+      currentPage = i;
       query._page = i;
-      fetchProducts();
-      pageNumber.querySelectorAll("li").forEach((item) => {
-        item.classList.remove("active");
-      });
+      productList.innerHTML = "";
+      await fetchProducts();
       li.classList.add("active");
     });
     pageNumber.appendChild(li);
   }
 };
 
-pages();
 const nextPage = async () => {
-  await fetchProducts();
-  if (next !== null) {
+  if (nextURL !== null) {
+    productList.innerHTML = "";
     query._page++;
-    fetchProducts();
+    await fetchProducts();
   }
 };
+
 const prevPage = async () => {
-  await fetchProducts();
   if (query._page > 1) {
+    productList.innerHTML = "";
     query._page--;
-    fetchProducts();
+    await fetchProducts();
   }
 };
-
 fetchProducts();
+const deleteProduct = async (id) => {
+  try {
+    const response = await fetch(`${baseURL}/${id}`, {
+      method: "DELETE",
+    });
 
-const setDeleteProductId = (id) => {
-  const confirmDeleteButton = document.getElementById("confirmDeleteProduct");
-  confirmDeleteButton.dataset.productId = id;
-};
-
-const deletePr = async () => {
-  const confirmDeleteButton = document.getElementById("confirmDeleteProduct");
-  const id = confirmDeleteButton.dataset.productId;
-  console.log(id);
-  if (id) {
-    await fetch(`${baseURL}/${id}`, { method: "DELETE" });
-    location.reload();
+    if (response.ok) {
+      const productItem = document.getElementById(`productItem-${id}`);
+      if (productItem) {
+        productItem.remove();
+      }
+    } else {
+      throw new Error("Xóa sản phẩm không thành công!");
+    }
+  } catch (error) {
+    console.error("Lỗi khi xóa sản phẩm:", error.message);
   }
 };
-
-document
-  .getElementById("confirmDeleteProduct")
-  .addEventListener("click", deletePr);
-
-const editPr = async (id) => {
+let editingProductId = null;
+const openUpdateModal = async (id) => {
   console.log(`Sửa: ${id}`);
   editingProductId = id;
   const res = await fetch(`${baseURL}/${id}`);
   const data = await res.json();
-  document.getElementById("name-edit").value = data.name;
-  document.getElementById("price-edit").value = data.price;
+  let nameInput = document.getElementById("name-edit");
+  let priceInput = document.getElementById("price-edit");
+  nameInput.value = data.name;
+  priceInput.value = data.price;
 };
 
-const addProduct = async () => {
-  const name = document.getElementById("name").value;
-  const price = document.getElementById("price").value;
-  if (name === "") {
-    alert("Không được để trống tên sản phẩm");
-    document.getElementById("name").focus();
-  } else if (price === "") {
-    alert("Không được để trống giá sản phẩm");
-    document.getElementById("price").focus();
-  } else if (price < 0) {
-    alert("Giá sản phẩm phải lớn hơn 0");
-    document.getElementById("price").focus();
-  } else {
-    if (editingProductId) {
-      await fetch(`${baseURL}/${editingProductId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, price }),
-      });
-      alert("Sửa sản phẩm thành công");
-    } else {
-      await fetch(baseURL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, price }),
-      });
-      alert("Thêm sản phẩm thành công");
-    }
-    fetchProducts();
-    productForm.submit();
+const handleUpdateProduct = async () => {
+  if (editingProductId) {
+    let name = document.getElementById("name-edit").value;
+    let priceString = document.getElementById("price-edit").value;
+    let price = parseFloat(priceString);
+    await fetch(`${baseURL}/${editingProductId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, price }),
+    });
   }
 };
-
-const handleAddProductClick = (event) => {
-  event.preventDefault();
-  addProduct();
-};
-handleAddProduct.addEventListener("click", handleAddProductClick);
-
-// let min;
-// let max;
-
-// filterForm.addEventListener("submit", async (event) => {
-//   event.preventDefault();
-//   min = document.getElementById("min").value;
-//   max = document.getElementById("max").value;
-//   await handleSort();
-// });
-// const handleSort = async () => {
-//   const res = await fetch(baseURL + `?price_gte=${min}&price_lte=${max}`);
-//   const data = await res.json();
-//   productList.innerHTML = "";
-//   if (Array.isArray(data)) {
-//     data.forEach((element, index) => {
-//       const productItem = createProductItem(element, index);
-//       productList.appendChild(productItem);
-//     });
-//   } else {
-//     console.error("Data is not an array:", data);
-//   }
-// };
-// let keyWords;
-
-// searchForm.addEventListener("submit", async (event) => {
-//   event.preventDefault();
-//   keyWords = document.getElementById("searchInput").value;
-//   await handleSearch();
-// });
-// handleAddProduct.addEventListener("click", handleAddProductClick);
-// const handleSearch = async () => {
-//   const res = await fetch(baseURL + `?name=${keyWords}`);
-//   const data = await res.json();
-//   console.log(data);
-//   productList.innerHTML = "";
-//   if (Array.isArray(data)) {
-//     data.forEach((element, index) => {
-//       const productItem = createProductItem(element, index);
-//       productList.appendChild(productItem);
-//     });
-//   } else {
-//     console.error("Data is not an array:", data);
-//   }
-// };
 const createProductItem = (element, index) => {
   const newElm = document.createElement("tr");
-  newElm.classList.add("productItem");
+  newElm.classList.add(`productItem-${element.id}`);
   newElm.innerHTML = `
       <th scope="row">${(query._page - 1) * query._per_page + index + 1}</th>
       <td>${element.name}</td>
       <td>${element.price}</td>
       <td>
-          <button data-toggle="modal" data-target="#modalDeleteProduct" class="btn btn-outline-info" onclick="setDeleteProductId('${
+          <button type="button" class="btn btn-outline-info" onclick="deleteProduct('${
             element.id
           }')">Xóa</button>
-          <button data-toggle="modal" data-target="#modalEditProduct" class="btn btn-outline-warning" onclick="editPr('${
+          <button data-toggle="modal" data-target="#modalEditProduct" class="btn btn-outline-warning" onclick="openUpdateModal('${
             element.id
           }')">Sửa</button>
       </td>
   `;
   return newElm;
-};
-const handleSortPrice = async () => {
-  while (productList.firstChild) {
-    productList.removeChild(productList.firstChild);
-  }
-
-  const res = await fetch(baseURL + `?_sort=price&_order=asc`);
-  const data = await res.json();
-  data.forEach((element, index) => {
-    const productItem = createProductItem(element, index);
-    productList.appendChild(productItem);
-  });
 };

@@ -46,19 +46,16 @@
                         <div class="filter">
                             <form id="filterForm" class="form-inline">
                                 <div class="form-group">
-                                    <label class="mr-1" for="filterPrice">Giá:
-                                    </label>
-                                    <select
-                                        onchange="onChangeSortPrice()"
-                                        class="custom-select"
-                                        id="sortPrice">
-                                        <option value="asc">Nhỏ - lớn</option>
-                                        <option value="desc">Lớn - nhỏ</option>
-                                    </select>
+                                    <input id="searchInput"
+                                        class="form-control mr-sm-2"
+                                        type="search"
+                                        placeholder="Nhập tên sản phẩm..."
+                                        aria-label="Search">
                                 </div>
                                 <button
+                                    id="filterButton"
                                     class="btn btn-outline-success my-2 my-sm-0"
-                                    type="submit">Lọc</button>
+                                    type="button" onclick="getValueForSearch()">Tìm kiếm</button>
                             </form>
                         </div>
                     </div>
@@ -102,128 +99,123 @@
                                                 id="price"
                                                 placeholder="Nhập giá sản phẩm...">
                                         </div>
-                                        <button id="addProduct" type="submit"
-                                            class="btn btn-primary d-none">Thêm
-                                            sản
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button id="handleAddProduct"
+                                            type="button"
+                                            class="btn btn-primary">Thêm sản
                                             phẩm</button>
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button id="handleAddProduct" type="button"
-                                        class="btn btn-primary">Thêm sản
-                                        phẩm</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">STT</th>
-                            <th scope="col">Tên</th>
-                            <th scope="col">
-                                Giá
-                            </th>
-                            <th scope="col">Chức năng</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productList">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">STT</th>
+                                <th scope="col">Tên</th>
+                                <th onclick="sortPrice()" scope="col">
+                                    Giá<i class="bi bi-arrow-down-up"></i>
+                                </th>
+                                <th scope="col">Chức năng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productList">
 
-                    </tbody>
-                </table>
-                <div class="limit">
-                    <select onchange="onChangePerPage()" class="custom-select"
-                        id="limitPerPage">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                </div>
-                <div
-                    class="d-flex justify-content-center align-items-center"
-                    id="pagination">
-                    <button class="btn" id="prevPageBtn"
-                        onclick="prevPage()">Prev</button>
-                    <ul class="nav" id="pages">
-                    </ul>
-                    <button class="btn" id="nextPageBtn"
-                        onclick="nextPage()">Next</button>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" id="modalEditProduct"
-            tabindex="-1"
-            role="dialog" aria-labelledby="exampleModalCenterTitle"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered"
-                role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title"
-                            id="exampleModalLongTitle">Sửa
-                            sản phẩm</h5>
-                        <button type="button" class="close"
-                            data-dismiss="modal"
-                            aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        </tbody>
+                    </table>
+                    <div class="limit">
+                        <select onchange="onChangePerPage()"
+                            class="custom-select"
+                            id="limitPerPage">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
                     </div>
-                    <div class="modal-body">
-                        <form action id="productForm">
-                            <div class="form-group">
-                                <label
-                                    for="formGroupExampleInput">Tên
-                                    sản
-                                    phẩm</label>
-                                <input type="text"
-                                    class="form-control"
-                                    id="name-edit"
-                                    placeholder="Nhập tên sản phẩm...">
-                            </div>
-                            <div class="form-group">
-                                <label
-                                    for="formGroupExampleInput2">Giá
-                                    sản
-                                    phẩm</label>
-                                <input type="number"
-                                    class="form-control"
-                                    id="price-edit"
-                                    placeholder="Nhập giá sản phẩm...">
-                            </div>
-                            <button id="addProduct" type="submit"
-                                class="btn btn-primary d-none">Thêm
-                                sản
-                                phẩm</button>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="editOrAdd" type="submit"
-                            class="btn btn-primary">Sửa sản
-                            phẩm</button>
+                    <div
+                        class="d-flex justify-content-center align-items-center"
+                        id="pagination">
+                        <button type="button" class="btn" id="prevPageBtn"
+                            onclick="prevPage()">Prev</button>
+                        <ul class="nav" id="pages">
+                        </ul>
+                        <button type="button" class="btn" id="nextPageBtn"
+                            onclick="nextPage()">Next</button>
                     </div>
                 </div>
             </div>
-        </div>
+            <div class="modal fade" id="modalEditProduct"
+                tabindex="-1"
+                role="dialog" aria-labelledby="exampleModalCenterTitle"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"
+                    role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"
+                                id="exampleModalLongTitle">Sửa
+                                sản phẩm</h5>
+                            <button type="button" class="close"
+                                data-dismiss="modal"
+                                aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form action id="editProductForm">
+                                <div class="form-group">
+                                    <label
+                                        for="formGroupExampleInput">Tên
+                                        sản
+                                        phẩm</label>
+                                    <input type="text"
+                                        class="form-control"
+                                        id="name-edit"
+                                        placeholder="Nhập tên sản phẩm...">
+                                </div>
+                                <div class="form-group">
+                                    <label
+                                        for="formGroupExampleInput2">Giá
+                                        sản
+                                        phẩm</label>
+                                    <input type="number"
+                                        class="form-control"
+                                        id="price-edit"
+                                        placeholder="Nhập giá sản phẩm...">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button onclick="handleUpdateProduct()"
+                                id="editProduct"
+                                class="btn btn-primary">Lưu</button>
 
-        <div class="modal fade" id="modalDeleteProduct" tabindex="-1"
-            aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        Xác nhận xóa sản phẩm
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">Hủy</button>
-                        <button type="button"
-                            class="btn btn-primary"
-                            id="confirmDeleteProduct">Xóa</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <script src="assets/js/main.js"></script>
-    </body>
-</html>
+
+            <div class="modal fade" id="modalDeleteProduct" tabindex="-1"
+                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            Xác nhận xóa sản phẩm
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal">Hủy</button>
+                            <button type="button"
+                                class="btn btn-primary"
+                                id="confirmDeleteProduct">Xóa</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="searchResults"></div>
+            <script src="assets/js/main.js"></script>
+        </body>
+    </html>
