@@ -8,6 +8,16 @@ const query = {
   _order: null,
   name: null,
 };
+const updateURL = () => {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== null && value !== undefined) {
+      params.set(key, value);
+    }
+  }
+  window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
+};
+updateURL();
 const sortPrice = () => {
   if (query._sort === null) {
     query._sort = "-price";
@@ -17,6 +27,7 @@ const sortPrice = () => {
     query._sort = null;
   }
   fetchProducts();
+  updateURL();
 };
 const getValueForSearch = () => {
   const value = document.getElementById("searchInput").value;
@@ -28,6 +39,7 @@ const getValueForSearch = () => {
     query.name = null;
   }
   fetchProducts();
+  updateURL();
 };
 const keys = Object.keys(query);
 let nextURL = null;
@@ -72,6 +84,13 @@ const fetchProducts = async () => {
     const productItem = createProductItem(element, index);
     productList.appendChild(productItem);
   });
+  const showPagination = document.getElementById("pagination");
+  if (data.items > query._per_page) {
+    showPagination.classList.add("d-flex");
+  } else {
+    showPagination.classList.add("d-none");
+    console.log(123);
+  }
   let pageNumber = document.getElementById("pages");
   pageNumber.innerHTML = "";
   let currentPage = query._page;
